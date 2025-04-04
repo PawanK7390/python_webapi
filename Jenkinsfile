@@ -39,11 +39,14 @@ pipeline {
             steps {
                 bat '''
                     powershell -Command "if (!(Test-Path publish)) { New-Item -ItemType Directory -Path publish }"
-                    powershell -Command "Get-ChildItem -Exclude publish,venv -Recurse | Copy-Item -Destination publish -Recurse -Force"
-                    powershell -Command "Compress-Archive -Path publish\\* -DestinationPath ${env.ZIP_FILE} -Force"
+                    powershell -Command "Get-ChildItem -Recurse -Directory | Where-Object { $_.Name -notin @('venv', 'publish') } | ForEach-Object { Copy-Item $_.FullName -Destination publish -Recurse -Force }"
+                    powershell -Command "Remove-Item publish -Recurse -Force -ErrorAction SilentlyContinue"
+                    powershell -Command "Get-ChildItem -File | ForEach-Object { Copy-Item $_.FullName -Destination publish -Force }"
+                    powershell -Command "Compress-Archive -Path publish\\* -DestinationPath publish.zip -Force"
                 '''
             }
         }
+
 
         stage('Deploy to Azure') {
             steps {
@@ -61,10 +64,10 @@ pipeline {
 
     post {
         success {
-            echo '✅ Deployment Successful!'
+            echo ' Deployment Successful!'
         }
         failure {
-            echo '❌ Deployment Failed. Please check logs above.'
+            echo ' Deployment Failed. Please check logs above.'
         }
     }
 }
