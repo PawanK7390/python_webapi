@@ -1,3 +1,5 @@
+import os
+import uvicorn
 from fastapi import FastAPI
 from models import Item
 
@@ -17,3 +19,7 @@ def create_item(item: Item):
     return {"received_item": item}
 
 #ccommentfg
+if __name__ == "__main__":
+    port = int(os.getenv("PORT", 8000))  # Use PORT from Azure
+    uvicorn.run(app, host="0.0.0.0", port=port)
+    
