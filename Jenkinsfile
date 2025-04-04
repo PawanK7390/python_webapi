@@ -44,7 +44,6 @@ pipeline {
             }
         }
 
-
         stage('Deploy to Azure') {
             steps {
                 withCredentials([azureServicePrincipal(credentialsId: AZURE_CREDENTIALS_ID)]) {
@@ -53,10 +52,10 @@ pipeline {
                     bat 'az webapp config appsettings set --resource-group %RESOURCE_GROUP% --name %APP_SERVICE_NAME% --settings "PORT=8000"'
                     bat 'az webapp config set --resource-group %RESOURCE_GROUP% --name %APP_SERVICE_NAME% --startup-file "python main.py"'
                     bat 'az webapp deploy --resource-group %RESOURCE_GROUP% --name %APP_SERVICE_NAME% --src-path publish.zip --type zip'
+                }
+            }
         }
     }
-}
-
 
     post {
         success {
