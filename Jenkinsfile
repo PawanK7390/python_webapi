@@ -30,12 +30,20 @@ pipeline {
 
         stage('Package App') {
             steps {
-                bat 'powershell -Command "if (Test-Path publish.zip) { Remove-Item publish.zip -Force }"'
+                // Step 1: Clean up old publish folder (if exists)
+                bat 'powershell -Command "Remove-Item -Recurse -Force publish -ErrorAction SilentlyContinue"'
+
+                // Step 2: Create a new publish directory
                 bat 'powershell -Command "New-Item -ItemType Directory -Path publish"'
-                bat "powershell -Command \"Get-ChildItem -Exclude 'venv','publish','*.zip','.git','__pycache__' | ForEach-Object { Copy-Item \$_.FullName -Destination publish -Recurse -Force }\""
-                bat 'powershell -Command "Compress-Archive -Path * -DestinationPath publish.zip -Force"'
+
+                // Step 3: Copy all necessary files except ignored folders/files
+                bat 'powershell -Command "Get-ChildItem -Exclude venv,publish,*.zip,.git,__pycache__ | ForEach-Object { Copy-Item $_.FullName -Destination publish -Recurse -Force }"'
+
+                // Step 4: Create ZIP file from publish folder
+                bat 'powershell -Command "Compress-Archive -Path publish\\* -DestinationPath publish.zip -Force"'
             }
         }
+
 
         stage('Deploy to Azure') {
             steps {
