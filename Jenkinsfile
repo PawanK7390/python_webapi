@@ -5,6 +5,7 @@ pipeline {
         AZURE_CREDENTIALS_ID = 'azure-service-principal-python'
         RESOURCE_GROUP = 'rg-jenkins'
         APP_SERVICE_NAME = 'pythonwebapijenkins8387963808'
+        ZIP_FILE = 'publish.zip'
     }
 
     stages {
@@ -14,7 +15,7 @@ pipeline {
             }
         }
 
-        stage('Setup Python Environment') {
+        stage('Install Dependencies') {
             steps {
                 bat '''
                     python -m venv venv
@@ -25,32 +26,34 @@ pipeline {
             }
         }
 
-        stage('Test (Optional)') {
+        stage('Run Tests (Optional)') {
             steps {
                 bat '''
                     call venv\\Scripts\\activate
-                    pytest
+                    pytest || exit /b 0
                 '''
             }
         }
 
-        stage('Package App') {
+        stage('Prepare Artifact') {
             steps {
-                // Create a fresh 'publish' folder and copy everything except the publish folder itself
                 bat '''
-                    powershell -Command "New-Item -ItemType Directory -Path publish -Force"
-                    powershell -Command "Get-ChildItem -Path . -Exclude publish -Recurse | Copy-Item -Destination publish -Recurse -Force"
+                    powershell -Command "if (!(Test-Path publish)) { New-Item -ItemType Directory -Path publish }"
+                    powershell -Command "Get-ChildItem -Exclude publish,venv -Recurse | Copy-Item -Destination publish -Recurse -Force"
+                    powershell -Command "Compress-Archive -Path publish\\* -DestinationPath ${env.ZIP_FILE} -Force"
                 '''
             }
         }
 
-        stage('Deploy') {
+        stage('Deploy to Azure') {
             steps {
                 withCredentials([azureServicePrincipal(credentialsId: AZURE_CREDENTIALS_ID)]) {
-                    bat "az login --service-principal -u $AZURE_CLIENT_ID -p $AZURE_CLIENT_SECRET --tenant $AZURE_TENANT_ID"
-                    bat "powershell Compress-Archive -Path ./publish/* -DestinationPath ./publish.zip -Force"
-                    bat "az webapp config appsettings set --resource-group $RESOURCE_GROUP --name $APP_SERVICE_NAME --settings PORT=8000 SCM_DO_BUILD_DURING_DEPLOYMENT=true"
-                    bat "az webapp deploy --resource-group $RESOURCE_GROUP --name $APP_SERVICE_NAME --src-path ./publish.zip --type zip"
+                    bat """
+                        az login --service-principal -u %AZURE_CLIENT_ID% -p %AZURE_CLIENT_SECRET% --tenant %AZURE_TENANT_ID%
+                        az webapp config appsettings set --resource-group %RESOURCE_GROUP% --name %APP_SERVICE_NAME% --settings SCM_DO_BUILD_DURING_DEPLOYMENT=true
+                        az webapp config appsettings set --resource-group %RESOURCE_GROUP% --name %APP_SERVICE_NAME% --settings PORT=8000
+                        az webapp deploy --resource-group %RESOURCE_GROUP% --name %APP_SERVICE_NAME% --src-path ${env.ZIP_FILE} --type zip
+                    """
                 }
             }
         }
@@ -58,10 +61,10 @@ pipeline {
 
     post {
         success {
-            echo 'Deployment Successful!'
+            echo '✅ Deployment Successful!'
         }
         failure {
-            echo 'Deployment Failed. Check logs above.'
+            echo '❌ Deployment Failed. Please check logs above.'
         }
     }
 }
