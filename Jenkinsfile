@@ -32,7 +32,7 @@ pipeline {
             steps {
                 bat 'powershell -Command "if (Test-Path publish.zip) { Remove-Item publish.zip -Force }"'
                 bat 'powershell -Command "New-Item -ItemType Directory -Path publish"'
-                bat 'powershell -Command "Get-ChildItem -Exclude 'venv','publish','*.zip','*.git','__pycache__' | ForEach-Object { Copy-Item $_.FullName -Destination publish -Recurse -Force }"'
+                bat "powershell -Command \"Get-ChildItem -Exclude 'venv','publish','*.zip','.git','__pycache__' | ForEach-Object { Copy-Item \$_.FullName -Destination publish -Recurse -Force }\""
                 bat 'powershell -Command "Compress-Archive -Path * -DestinationPath publish.zip -Force"'
             }
         }
