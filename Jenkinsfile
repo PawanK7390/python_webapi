@@ -25,7 +25,7 @@ pipeline {
             }
         }
 
-        stage('Run Tests (Optional)') {
+        stage('Test (Optional)') {
             steps {
                 bat '''
                     call venv\\Scripts\\activate
@@ -44,12 +44,10 @@ pipeline {
 
         stage('Deploy to Azure') {
             steps {
-                withAzureCLI(credentialsId: AZURE_CREDENTIALS_ID) {
+                withCredentials([azureServicePrincipal(credentialsId: AZURE_CREDENTIALS_ID)]) {
                     bat '''
-                        az webapp deployment source config-zip --resource-group %RESOURCE_GROUP% --name %APP_SERVICE_NAME% --src publish.zip
-                        
-                        REM Set startup command to run FastAPI after deployment
-                        az webapp config set --resource-group %RESOURCE_GROUP% --name %APP_SERVICE_NAME% --startup-file "uvicorn main:app --host 0.0.0.0 --port 8000"
+                        az login --service-principal -u %AZURE_CLIENT_ID% -p %AZURE_CLIENT_SECRET% --tenant %AZURE_TENANT_ID%
+                        az webapp deploy --resource-group %RESOURCE_GROUP% --name %APP_SERVICE_NAME% --src-path publish.zip --type zip
                     '''
                 }
             }
@@ -58,11 +56,10 @@ pipeline {
 
     post {
         success {
-            echo 'Deployment Successful! '
+            echo ' Deployment Successful!'
         }
         failure {
-            echo 'Deployment Failed. Check logs above. '
+            echo ' Deployment Failed. Check logs above.'
         }
     }
-}
-
+} 
