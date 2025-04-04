@@ -14,30 +14,41 @@ pipeline {
             }
         }
 
-        stage('Setup Python') {
+        stage('Setup Python Environment') {
             steps {
-                bat 'python -m venv venv'
-                bat '.\\venv\\Scripts\\activate && pip install -r requirements.txt'
+                bat '''
+                    python -m venv venv
+                    call venv\\Scripts\\activate
+                    pip install --upgrade pip
+                    pip install -r requirements.txt
+                '''
             }
         }
 
         stage('Test (Optional)') {
             steps {
-                bat '.\\venv\\Scripts\\activate && pytest'
+                bat '''
+                    call venv\\Scripts\\activate
+                    pytest
+                '''
             }
         }
 
         stage('Package App') {
             steps {
-                bat 'powershell Compress-Archive -Path .\\* -DestinationPath publish.zip -Force'
+                bat '''
+                    powershell -Command "Compress-Archive -Path * -DestinationPath publish.zip -Force"
+                '''
             }
         }
 
         stage('Deploy to Azure') {
             steps {
                 withCredentials([azureServicePrincipal(credentialsId: AZURE_CREDENTIALS_ID)]) {
-                    bat "az login --service-principal -u $AZURE_CLIENT_ID -p $AZURE_CLIENT_SECRET --tenant $AZURE_TENANT_ID"
-                    bat "az webapp deploy --resource-group $RESOURCE_GROUP --name $APP_SERVICE_NAME --src-path publish.zip --type zip"
+                    bat '''
+                        az login --service-principal -u %AZURE_CLIENT_ID% -p %AZURE_CLIENT_SECRET% --tenant %AZURE_TENANT_ID%
+                        az webapp deploy --resource-group %RESOURCE_GROUP% --name %APP_SERVICE_NAME% --src-path publish.zip --type zip
+                    '''
                 }
             }
         }
@@ -45,10 +56,10 @@ pipeline {
 
     post {
         success {
-            echo 'Deployment Successful!'
+            echo ' Deployment Successful!'
         }
         failure {
-            echo 'Deployment Failed!'
+            echo ' Deployment Failed. Check logs above.'
         }
     }
 }
