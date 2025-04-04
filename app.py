@@ -25,3 +25,6 @@ def read_item(item_id: int, q: str = None):
 def create_item(item: Item):
     return {"received_item": item}
 
+
+if __name__ == "__main__":
+    uvicorn.run("main:app", host="0.0.0.0", port=8000)
