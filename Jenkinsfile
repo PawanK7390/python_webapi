@@ -36,8 +36,11 @@ pipeline {
 
         stage('Package App') {
             steps {
-                bat 'powershell -Command "New-Item -ItemType Directory -Path publish -Force"'
-                bat 'powershell -Command "Copy-Item * -Destination publish -Recurse -Force"'
+                // Create a fresh 'publish' folder and copy everything except the publish folder itself
+                bat '''
+                    powershell -Command "New-Item -ItemType Directory -Path publish -Force"
+                    powershell -Command "Get-ChildItem -Path . -Exclude publish -Recurse | Copy-Item -Destination publish -Recurse -Force"
+                '''
             }
         }
 
@@ -55,10 +58,10 @@ pipeline {
 
     post {
         success {
-            echo ' Deployment Successful!'
+            echo 'Deployment Successful!'
         }
         failure {
-            echo ' Deployment Failed. Check logs above.'
+            echo 'Deployment Failed. Check logs above.'
         }
     }
 }
