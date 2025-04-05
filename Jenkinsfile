@@ -51,6 +51,7 @@ pipeline {
             }
         }
 
+        // ---------- DEPLOY TO AZURE ----------
         stage('Deploy to Azure') {
             steps {
                 withCredentials([azureServicePrincipal(credentialsId: AZURE_CREDENTIALS_ID)]) {
