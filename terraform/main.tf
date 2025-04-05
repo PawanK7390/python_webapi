@@ -1,6 +1,26 @@
+terraform {
+  required_providers {
+    azurerm = {
+      source  = "hashicorp/azurerm"
+      version = "~> 3.0"
+    }
+    random = {
+      source  = "hashicorp/random"
+      version = "~> 3.0"
+    }
+  }
+
+  required_version = ">= 1.3.0"
+}
+
 provider "azurerm" {
   features {}
   subscription_id = "eea7dd66-806c-47a7-912f-2e3f1af71f5e"
+}
+
+# Random suffix to avoid naming conflicts
+resource "random_id" "suffix" {
+  byte_length = 2
 }
 
 resource "azurerm_resource_group" "rg" {
@@ -9,7 +29,7 @@ resource "azurerm_resource_group" "rg" {
 }
 
 resource "azurerm_app_service_plan" "asp" {
-  name                = "my-app-plan"
+  name                = var.app_service_plan_name
   location            = azurerm_resource_group.rg.location
   resource_group_name = azurerm_resource_group.rg.name
   kind                = "Linux"
@@ -22,14 +42,14 @@ resource "azurerm_app_service_plan" "asp" {
 }
 
 resource "azurerm_linux_web_app" "app" {
-  name                = "pythonwebapijenkins8387963808"
+  name                = var.app_service_name
   location            = azurerm_resource_group.rg.location
   resource_group_name = azurerm_resource_group.rg.name
   service_plan_id     = azurerm_app_service_plan.asp.id
 
   site_config {
     application_stack {
-      python_version = "3.13"
+      python_version = "3.10" # Recommended version currently supported
     }
 
     always_on = false # Not available in Free tier
