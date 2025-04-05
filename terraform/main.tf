@@ -37,7 +37,7 @@ resource "azurerm_app_service" "app" {
 
   site_config {
     always_on        = true
-    linux_fx_version = "PYTHON|3.13"
+    linux_fx_version = "PYTHON|3.11"
   }
 
   app_settings = {
