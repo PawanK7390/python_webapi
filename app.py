@@ -1,30 +1,10 @@
-import os
-import uvicorn
-from fastapi import FastAPI
-from models import Item
+from flask import Flask
 
-app = FastAPI(
-    title="Python Web API with Swagger",
-    description="This is a simple API built with FastAPI and deployed using Jenkins.",
-    version="1.0.0",
-    docs_url="/docs",             # Swagger UI
-    redoc_url="/redoc",           # ReDoc UI
-    openapi_url="/openapi.json"   # OpenAPI schema
-)
+app = Flask(__name__)
 
-@app.get("/")
-def read_root():
-    return {"message": "Hello, world from Python API!"}
-
-@app.get("/items/{item_id}")
-def read_item(item_id: int, q: str = None):
-    return {"item_id": item_id, "query": q}
-
-
-@app.post("/items/")
-def create_item(item: Item):
-    return {"received_item": item}
-
+@app.route("/")
+def home():
+    return "Hello, Azure from Jenkins!"
 
 if __name__ == "__main__":
-    uvicorn.run("main:app", host="0.0.0.0", port=8000)
+    app.run(host="0.0.0.0", port=8000)
