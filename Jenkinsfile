@@ -36,6 +36,7 @@ pipeline {
         stage('Setup Python Environment') {
             steps {
                 bat 'python -m venv venv'
+                bat 'call venv\\Scripts\\activate'
                 bat 'call venv\\Scripts\\activate && pip install --upgrade pip'
                 bat 'call venv\\Scripts\\activate && pip install -r requirements.txt'
             }
@@ -55,8 +56,15 @@ pipeline {
         stage('Deploy to Azure') {
             steps {
                 withCredentials([azureServicePrincipal(credentialsId: AZURE_CREDENTIALS_ID)]) {
+                    // Login to Azure
                     bat 'az login --service-principal -u %AZURE_CLIENT_ID% -p %AZURE_CLIENT_SECRET% --tenant %AZURE_TENANT_ID%'
-                    bat 'az webapp config appsettings set --resource-group %RESOURCE_GROUP% --name %APP_SERVICE_NAME% --settings SCM_DO_BUILD_DURING_DEPLOYMENT=true PORT=8000'
+
+                    // Set app settings
+                    bat 'az webapp config appsettings set --resource-group %RESOURCE_GROUP% --name %APP_SERVICE_NAME% --settings SCM_DO_BUILD_DURING_DEPLOYMENT=true'
+                    bat 'az webapp config appsettings set --resource-group %RESOURCE_GROUP% --name %APP_SERVICE_NAME% --settings WEBSITES_PORT=8000'
+                    bat 'az webapp config appsettings set --resource-group %RESOURCE_GROUP% --name %APP_SERVICE_NAME% --settings STARTUP_COMMAND="python app.py"'
+
+                    // Deploy the zip package
                     bat 'az webapp deploy --resource-group %RESOURCE_GROUP% --name %APP_SERVICE_NAME% --src-path publish.zip --type zip'
                 }
             }
@@ -65,10 +73,10 @@ pipeline {
 
     post {
         success {
-            echo ' Deployment Successful!'
+            echo '✅ Deployment Successful!'
         }
         failure {
-            echo ' Deployment Failed. Check logs above.'
+            echo '❌ Deployment Failed. Check logs above.'
         }
     }
 }
