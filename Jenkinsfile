@@ -14,6 +14,25 @@ pipeline {
             }
         }
 
+        // ---------- TERRAFORM STAGES ----------
+        stage('Terraform Init') {
+            steps {
+                dir('terraform') {
+                    bat 'terraform init'
+                }
+            }
+        }
+
+        stage('Terraform Plan and Apply') {
+            steps {
+                dir('terraform') {
+                    bat 'terraform plan -out=tfplan'
+                    bat 'terraform apply -auto-approve tfplan'
+                }
+            }
+        }
+
+        // ---------- PYTHON SETUP ----------
         stage('Setup Python') {
             steps {
                 bat 'python -m venv venv'
@@ -22,6 +41,7 @@ pipeline {
             }
         }
 
+        // ---------- PACKAGE APP ----------
         stage('Package Application') {
             steps {
                 bat 'powershell -Command "Remove-Item -Recurse -Force publish -ErrorAction SilentlyContinue"'
@@ -31,6 +51,7 @@ pipeline {
             }
         }
 
+        // ---------- DEPLOY TO AZURE ----------
         stage('Deploy to Azure') {
             steps {
                 withCredentials([azureServicePrincipal(credentialsId: AZURE_CREDENTIALS_ID)]) {
@@ -44,10 +65,10 @@ pipeline {
 
     post {
         success {
-            echo ' Deployment Successful!'
+            echo 'Deployment Successful!'
         }
         failure {
-            echo ' Deployment Failed. Check logs above.'
+            echo 'Deployment Failed. Check logs above.'
         }
     }
 }
