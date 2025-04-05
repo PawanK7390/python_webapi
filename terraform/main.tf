@@ -12,32 +12,27 @@ resource "azurerm_app_service_plan" "asp" {
   name                = "my-app-plan"
   location            = azurerm_resource_group.rg.location
   resource_group_name = azurerm_resource_group.rg.name
+  kind                = "Linux"
+  reserved            = true  # Required for Linux
 
   sku {
     tier = "Basic"
     size = "B1"
   }
-
-  # Prevent replacement/destroy
-  lifecycle {
-    prevent_destroy = true
-    ignore_changes = [
-      sku,
-      kind,
-      tags
-    ]
-  }
 }
 
-resource "azurerm_app_service" "app" {
+resource "azurerm_linux_web_app" "app" {
   name                = "pythonwebapijenkins8387963808"
   location            = azurerm_resource_group.rg.location
   resource_group_name = azurerm_resource_group.rg.name
-  app_service_plan_id = azurerm_app_service_plan.asp.id
+  service_plan_id     = azurerm_app_service_plan.asp.id
 
   site_config {
-    linux_fx_version = "PYTHON"  
-    always_on        = true
+    application_stack {
+      python_version = "3.10"
+    }
+
+    always_on = true
   }
 
   app_settings = {
@@ -45,13 +40,4 @@ resource "azurerm_app_service" "app" {
     "WEBSITES_PORT"                  = "8000"
     "STARTUP_COMMAND"                = "python app.py"
   }
-
-  lifecycle {
-    prevent_destroy = true
-    ignore_changes = [
-      app_settings,
-      site_config[0].always_on
-    ]
-  }
 }
-
