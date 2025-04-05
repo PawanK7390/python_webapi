@@ -14,7 +14,7 @@ pipeline {
             }
         }
 
-        // ---------- TERRAFORM STAGES ----------
+        // ---------- TERRAFORM ----------
         stage('Terraform Init') {
             steps {
                 dir('terraform') {
@@ -23,10 +23,12 @@ pipeline {
             }
         }
 
-        stage('Terraform Import') {
+        stage('Terraform Import Existing Resources') {
             steps {
                 dir('terraform') {
                     bat 'terraform import azurerm_resource_group.rg /subscriptions/eea7dd66-806c-47a7-912f-2e3f1af71f5e/resourceGroups/rg-jenkins'
+                    bat 'terraform import azurerm_app_service_plan.asp /subscriptions/eea7dd66-806c-47a7-912f-2e3f1af71f5e/resourceGroups/rg-jenkins/providers/Microsoft.Web/serverFarms/my-app-plan'
+                    bat 'terraform import azurerm_app_service.app /subscriptions/eea7dd66-806c-47a7-912f-2e3f1af71f5e/resourceGroups/rg-jenkins/providers/Microsoft.Web/sites/pythonwebapijenkins8387963808'
                 }
             }
         }
@@ -40,7 +42,7 @@ pipeline {
             }
         }
 
-        // ---------- PYTHON SETUP ----------
+        // ---------- PYTHON APP ----------
         stage('Setup Python') {
             steps {
                 bat 'python -m venv venv'
@@ -49,7 +51,6 @@ pipeline {
             }
         }
 
-        // ---------- PACKAGE APP ----------
         stage('Package Application') {
             steps {
                 bat 'powershell -Command "Remove-Item -Recurse -Force publish -ErrorAction SilentlyContinue"'
@@ -59,7 +60,7 @@ pipeline {
             }
         }
 
-        // ---------- DEPLOY TO AZURE ----------
+        // ---------- DEPLOY ----------
         stage('Deploy to Azure') {
             steps {
                 withCredentials([azureServicePrincipal(credentialsId: AZURE_CREDENTIALS_ID)]) {
@@ -73,10 +74,10 @@ pipeline {
 
     post {
         success {
-            echo ' Deployment Successful!'
+            echo '✅ Deployment Successful!'
         }
         failure {
-            echo ' Deployment Failed. Check logs above.'
+            echo '❌ Deployment Failed. Check logs above.'
         }
     }
 }
