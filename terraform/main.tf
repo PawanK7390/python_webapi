@@ -13,18 +13,23 @@ resource "azurerm_app_service_plan" "asp" {
   name                = "my-app-plan"
   location            = azurerm_resource_group.rg.location
   resource_group_name = azurerm_resource_group.rg.name
+
   sku {
     tier = "Basic"
     size = "B1"
   }
 
+  # Prevent replacement/destroy
   lifecycle {
+    prevent_destroy = true
     ignore_changes = [
-      sku,  # Ignore changes to plan tier/size
-      tags  # Ignore tag edits made from portal
+      sku,            # optional: prevent Terraform from modifying SKU
+      kind,
+      tags
     ]
   }
 }
+
 
 
 
@@ -39,10 +44,12 @@ resource "azurerm_app_service" "app" {
   }
 
   lifecycle {
+    prevent_destroy = true
     ignore_changes = [
-      site_config[0].always_on,  # Ignore if turned off manually
-      app_settings,              # Don’t override Jenkins/CLI appsettings
+      app_settings,
+      site_config[0].always_on
     ]
   }
 }
+
 
