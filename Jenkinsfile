@@ -23,6 +23,14 @@ pipeline {
             }
         }
 
+        stage('Terraform Import') {
+            steps {
+                dir('terraform') {
+                    bat 'terraform import azurerm_resource_group.rg /subscriptions/eea7dd66-806c-47a7-912f-2e3f1af71f5e/resourceGroups/rg-jenkins'
+                }
+            }
+        }
+
         stage('Terraform Plan and Apply') {
             steps {
                 dir('terraform') {
@@ -65,10 +73,10 @@ pipeline {
 
     post {
         success {
-            echo 'Deployment Successful!'
+            echo ' Deployment Successful!'
         }
         failure {
-            echo 'Deployment Failed. Check logs above.'
+            echo ' Deployment Failed. Check logs above.'
         }
     }
 }
