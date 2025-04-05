@@ -23,15 +23,6 @@ pipeline {
             }
         }
 
-        stage('Terraform Import Existing Resources') {
-            steps {
-                dir('terraform') {
-                    bat 'terraform import azurerm_app_service_plan.asp /subscriptions/eea7dd66-806c-47a7-912f-2e3f1af71f5e/resourceGroups/rg-jenkins/providers/Microsoft.Web/serverFarms/my-app-plan'
-                    bat 'terraform import azurerm_app_service.app /subscriptions/eea7dd66-806c-47a7-912f-2e3f1af71f5e/resourceGroups/rg-jenkins/providers/Microsoft.Web/sites/pythonwebapijenkins8387963808'
-                }
-            }
-        }
-
         stage('Terraform Plan and Apply') {
             steps {
                 dir('terraform') {
@@ -60,6 +51,7 @@ pipeline {
             }
         }
 
+        // ---------- DEPLOY TO AZURE ----------
         stage('Deploy to Azure') {
             steps {
                 withCredentials([azureServicePrincipal(credentialsId: AZURE_CREDENTIALS_ID)]) {
