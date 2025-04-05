@@ -1,10 +1,6 @@
-from flask import Flask
+from fastapi import FastAPI
+app = FastAPI()
 
-app = Flask(__name__)
-
-@app.route("/")
-def home():
-    return "Hello, Azure from Jenkins!"
-
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=8000)
+@app.get("/")
+def read_root():
+    return {"message": "Hello from Jenkins CI/CD!"}
