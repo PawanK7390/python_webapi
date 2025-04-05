@@ -22,23 +22,13 @@ resource "azurerm_app_service_plan" "asp" {
   lifecycle {
     prevent_destroy = true
     ignore_changes = [
-<<<<<<< HEAD
       sku,
-=======
-      sku,            # optional: prevent Terraform from modifying SKU
->>>>>>> d684d337b9156131ee14f7e74de4d684ceaccac6
       kind,
       tags
     ]
   }
 }
 
-<<<<<<< HEAD
-=======
-
-
-
->>>>>>> d684d337b9156131ee14f7e74de4d684ceaccac6
 resource "azurerm_app_service" "app" {
   name                = "pythonwebapijenkins8387963808"
   location            = azurerm_resource_group.rg.location
@@ -46,7 +36,6 @@ resource "azurerm_app_service" "app" {
   app_service_plan_id = azurerm_app_service_plan.asp.id
 
   site_config {
-<<<<<<< HEAD
     always_on        = true
     linux_fx_version = "PYTHON|3.13"
   }
@@ -57,11 +46,6 @@ resource "azurerm_app_service" "app" {
     "STARTUP_COMMAND"                = "python app.py"
   }
 
-=======
-    always_on = true
-  }
-
->>>>>>> d684d337b9156131ee14f7e74de4d684ceaccac6
   lifecycle {
     prevent_destroy = true
     ignore_changes = [
@@ -70,5 +54,3 @@ resource "azurerm_app_service" "app" {
     ]
   }
 }
-
-
