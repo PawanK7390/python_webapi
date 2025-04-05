@@ -55,28 +55,16 @@ pipeline {
             steps {
                 bat 'powershell -Command "Remove-Item -Recurse -Force publish -ErrorAction SilentlyContinue"'
                 bat 'powershell -Command "New-Item -ItemType Directory -Path publish"'
-                bat 'powershell -Command "Copy-Item -Path app.py, requirements.txt -Destination publish -Force"'
-                // Optional: rename your startup command to a .txt for Azure
-                bat 'powershell -Command "Set-Content -Path publish\\startup.txt -Value \'uvicorn app:app --host 0.0.0.0 --port 8000\'"'
+                bat 'powershell -Command "Copy-Item -Path app.py, requirements.txt, startup.txt -Destination publish -Force"'
                 bat 'powershell -Command "Compress-Archive -Path publish\\* -DestinationPath publish.zip -Force"'
             }
         }
 
-        // ---------- DEPLOY TO AZURE ----------
         stage('Deploy to Azure') {
             steps {
                 withCredentials([azureServicePrincipal(credentialsId: AZURE_CREDENTIALS_ID)]) {
                     bat 'az login --service-principal -u %AZURE_CLIENT_ID% -p %AZURE_CLIENT_SECRET% --tenant %AZURE_TENANT_ID%'
-                    
-                    // Set important app settings
-                    bat '''
-                        az webapp config appsettings set --resource-group %RESOURCE_GROUP% --name %APP_SERVICE_NAME% --settings ^
-                        WEBSITES_PORT=8000 ^
-                        SCM_DO_BUILD_DURING_DEPLOYMENT=true ^
-                        STARTUP_COMMAND="uvicorn app:app --host 0.0.0.0 --port 8000"
-                    '''
-
-                    // Deploy via ZIP
+                    bat 'az webapp config appsettings set --resource-group %RESOURCE_GROUP% --name %APP_SERVICE_NAME% --settings SCM_DO_BUILD_DURING_DEPLOYMENT=true PORT=8000'
                     bat 'az webapp deploy --resource-group %RESOURCE_GROUP% --name %APP_SERVICE_NAME% --src-path publish.zip --type zip'
                 }
             }
