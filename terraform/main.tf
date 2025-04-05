@@ -10,33 +10,39 @@ resource "azurerm_resource_group" "rg" {
 
 
 resource "azurerm_app_service_plan" "asp" {
-  name                = var.app_service_plan_name
+  name                = "my-app-plan"
   location            = azurerm_resource_group.rg.location
   resource_group_name = azurerm_resource_group.rg.name
-  kind                = "Linux"
-    reserved = true
-
   sku {
     tier = "Basic"
     size = "B1"
   }
+
+  lifecycle {
+    ignore_changes = [
+      sku,  # Ignore changes to plan tier/size
+      tags  # Ignore tag edits made from portal
+    ]
+  }
 }
 
 
+
 resource "azurerm_app_service" "app" {
-  name                = var.app_service_name
+  name                = "pythonwebapijenkins8387963808"
   location            = azurerm_resource_group.rg.location
   resource_group_name = azurerm_resource_group.rg.name
   app_service_plan_id = azurerm_app_service_plan.asp.id
 
   site_config {
-    linux_fx_version = "PYTHON|3.13"       # Set Python version
-    always_on        = true
+    always_on = true
   }
 
-  app_settings = {
-    "WEBSITES_PORT"           = "8000",                                 # Required for FastAPI/Uvicorn
-    "SCM_DO_BUILD_DURING_DEPLOYMENT" = "true"                          # Optional: Helps with Oryx-based build
-    "STARTUP_COMMAND"         = "uvicorn main:app --host 0.0.0.0 --port 8000" # Tells Azure how to run your app
+  lifecycle {
+    ignore_changes = [
+      site_config[0].always_on,  # Ignore if turned off manually
+      app_settings,              # Don’t override Jenkins/CLI appsettings
+    ]
   }
 }
+
