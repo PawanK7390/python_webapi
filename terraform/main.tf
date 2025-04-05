@@ -13,11 +13,11 @@ resource "azurerm_app_service_plan" "asp" {
   location            = azurerm_resource_group.rg.location
   resource_group_name = azurerm_resource_group.rg.name
   kind                = "Linux"
-  reserved            = true  # Required for Linux
+  reserved            = true # Required for Linux
 
   sku {
-    tier = "Basic"
-    size = "B1"
+    tier = "Free"
+    size = "F1"
   }
 }
 
@@ -29,10 +29,10 @@ resource "azurerm_linux_web_app" "app" {
 
   site_config {
     application_stack {
-      python_version = "3.10"
+      python_version = "3.13"
     }
 
-    always_on = true
+    always_on = false # Not available in Free tier
   }
 
   app_settings = {
